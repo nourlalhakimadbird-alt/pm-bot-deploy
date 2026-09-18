@@ -1,0 +1,12 @@
+{
+  "objective": "Launch the Client Portal by 25 June so clients can self-serve account management, replacing manual email requests.",
+  "project_lead": "Sarah Chen",
+  "deadline": "2026-06-25",
+  "escalation_after_hours": 4,
+  "scope_log": [
+    {
+      "date": "2026-06-01",
+      "change": "Initial project brief created: Design Approved -> Build Complete -> Launch Ready milestones, 7 tasks."
+    }
+  ]
+}

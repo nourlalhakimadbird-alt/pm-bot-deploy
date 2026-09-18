@@ -1,0 +1,10 @@
+{
+  "_comment": "Map every ClickUp assignee to their real Slack handle. Replace with your actual workspace's people before demoing — do not guess handles.",
+  "contacts": [
+    { "clickup_assignee": "Maria Santos", "slack_handle": "@maria.santos", "role": "owner" },
+    { "clickup_assignee": "Daniel Kim", "slack_handle": "@daniel_k", "role": "owner" },
+    { "clickup_assignee": "James Obi", "slack_handle": "@james.obi", "role": "owner" },
+    { "clickup_assignee": "Aisha Rahman", "slack_handle": "@aisha.r", "role": "owner" },
+    { "clickup_assignee": "Sarah Chen", "slack_handle": "@sarah.chen", "role": "lead" }
+  ]
+}

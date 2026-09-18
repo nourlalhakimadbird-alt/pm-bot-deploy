@@ -1,0 +1,56 @@
+{
+  "env": {
+    "vars": {
+      "MINIMAX_API_KEY": "${MINIMAX_API_KEY}",
+      "CLICKUP_API_TOKEN": "${CLICKUP_API_TOKEN}",
+      "CLICKUP_TEAM_ID": "${CLICKUP_TEAM_ID}",
+      "CLICKUP_LIST_ID": "${CLICKUP_LIST_ID}",
+      "CLICKUP_WEBHOOK_SECRET": "${CLICKUP_WEBHOOK_SECRET}"
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "minimax/MiniMax-M3"
+      }
+    }
+  },
+  "models": {
+    "mode": "merge",
+    "providers": {
+      "minimax": {
+        "baseUrl": "https://api.minimax.io/anthropic",
+        "apiKey": "${MINIMAX_API_KEY}",
+        "api": "anthropic-messages",
+        "models": [
+          {
+            "id": "MiniMax-M3",
+            "name": "MiniMax M3",
+            "reasoning": true,
+            "input": ["text", "image"],
+            "contextWindow": 1000000,
+            "maxTokens": 131072
+          }
+        ]
+      }
+    }
+  },
+  "channels": {
+    "slack": {
+      "mode": "socket",
+      "botToken": "${SLACK_BOT_TOKEN}",
+      "appToken": "${SLACK_APP_TOKEN}",
+      "signingSecret": "${SLACK_SIGNING_SECRET}",
+      "dm": {
+        "enabled": true,
+        "dmPolicy": "open"
+      },
+      "requireMention": false
+    }
+  },
+  "hooks": {
+    "enabled": true,
+    "token": "${OPENCLAW_HOOKS_TOKEN}",
+    "allowedAgentIds": ["main"]
+  }
+}

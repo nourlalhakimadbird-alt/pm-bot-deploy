@@ -1,0 +1,19 @@
+{
+  "name": "pm-bot",
+  "version": "1.0.0",
+  "description": "A project-management bot for ClickUp + Slack, built on [OpenClaw](https://openclaw.ai/) (agent runtime/Slack gateway) and MiniMax (LLM). It creates tasks from a brief, detects blocked/overdue tasks on its own, DMs the owner, escalates to the project lead if there's no response, produces On Track / At Risk / Off Track status reports, logs scope changes without losing the original objective, and never marks a task Complete without explicit confirmation.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "openclaw": "^2026.9.4"
+  }
+}

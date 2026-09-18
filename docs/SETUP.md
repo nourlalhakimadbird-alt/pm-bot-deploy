@@ -181,39 +181,69 @@ Before touching the VPS, confirm all of this works locally:
 - [ ] The shim accepts a correctly-signed test payload and rejects a bad one
 - [ ] `automations list` shows `pm-bot-periodic-check` scheduled
 
-## 8. Deploy to Hostinger
+## 8. Deploy to Hostinger (Docker Compose)
 
-You have a VPS with root SSH access but no domain — we'll use
-[sslip.io](https://sslip.io) (a free wildcard DNS service that resolves
-`<ip-with-dashes>.sslip.io` to that IP automatically) so Caddy can still get a real
-Let's Encrypt certificate without buying a domain.
+Runs as two containers — `gateway` (OpenClaw) and `shim` (the webhook relay) — on a
+dedicated Docker network, each with its own memory ceiling so this project can't starve
+other things running on the same box. No domain needed: we use
+[sslip.io](https://sslip.io) (free wildcard DNS resolving `<ip-with-dashes>.sslip.io` to
+that IP) so Caddy can still get a real Let's Encrypt certificate.
 
-1. SSH in: `ssh root@<VPS_IP>`.
-2. Install Node.js (LTS) and Caddy:
+**Note on a shared VPS:** if this box already runs other AI-agent projects (e.g.
+Hostinger's own OpenClaw/Hermes template containers), check `docker ps` and `free -h`
+first — a small VPS can run out of RAM fast with multiple full agent stacks live at
+once. Pause what you're not actively using (`docker stop <container>`) rather than
+leaving everything running simultaneously.
+
+1. Install Node.js ≥24.16 (OpenClaw's requirement) and Caddy — Ubuntu's default
+   NodeSource setup script may install an older major version, check with `node -v`:
    ```bash
-   curl -fsSL https://deb.nodesource.com/setup_22.x | bash -
+   curl -fsSL https://deb.nodesource.com/setup_26.x | bash -
    apt-get install -y nodejs caddy
-   npm install -g pm2
    ```
-3. Copy this repo and your real `.env` over (from your local machine):
+2. Get the code onto the VPS. If you don't have scp/rsync from a local terminal handy
+   (e.g. you're using a browser-based terminal), push this repo to a public GitHub repo
+   from your dev machine and clone it on the VPS — no auth needed for a public repo:
    ```bash
-   rsync -av --exclude node_modules --exclude .git ./ root@<VPS_IP>:~/pm-bot/
-   scp .env root@<VPS_IP>:~/pm-bot/.env
+   git clone https://github.com/<you>/<repo>.git ~/pm-bot
    ```
-4. On the VPS, install deps and repeat the onboarding + channel + hooks setup from
-   step 4 above (same commands, run on the VPS this time) — `~/.openclaw` on the VPS is
-   separate from your laptop's.
-5. Run both processes under pm2:
+   Then copy your real `.env` over separately (it's git-ignored, never pushed) — either
+   `scp .env root@<VPS_IP>:~/pm-bot/.env` from your dev machine, or paste its contents
+   into `nano ~/pm-bot/.env` on the VPS.
+3. Build and do the one-time onboarding. The `gateway` service will crash-loop if
+   started before it has config (expected) — use `docker compose run` for setup instead
+   of `up`, which starts a clean one-off container against the same volume:
    ```bash
    cd ~/pm-bot
-   set -a && source .env && set +a
-   pm2 start "npx openclaw gateway run" --name pm-bot-gateway
-   pm2 start scripts/clickup-webhook-shim.js --name pm-bot-shim
-   pm2 save
-   pm2 startup   # follow its printed instructions to survive reboots
+   docker compose build
+   docker compose run --rm --entrypoint sh gateway -c '
+     npx openclaw onboard --non-interactive --accept-risk --workspace /app \
+       --auth-choice minimax-global-api --minimax-api-key "$MINIMAX_API_KEY" \
+       --skip-channels --skip-daemon --skip-hooks --skip-search --skip-skills --skip-ui \
+       --gateway-bind lan'
+   docker compose run --rm --entrypoint sh gateway -c 'npx openclaw plugins install @openclaw/slack'
+   docker compose run --rm --entrypoint sh gateway -c '
+     npx openclaw channels add --channel slack \
+       --bot-token "$SLACK_BOT_TOKEN" --app-token "$SLACK_APP_TOKEN" \
+       --signing-secret "$SLACK_SIGNING_SECRET" --mode socket --name "PM Bot"'
+   docker compose run --rm --entrypoint sh gateway -c \
+     'npx openclaw config patch --stdin <<EOF
+   { hooks: { enabled: true, allowedAgentIds: ["main"] } }
+   EOF'
+   docker compose run --rm --entrypoint sh gateway -c "npx openclaw config set hooks.token '\${OPENCLAW_HOOKS_TOKEN}'"
+   docker compose run --rm --entrypoint sh gateway -c 'npx openclaw config set memory.search.enabled false'
    ```
-6. Point Caddy at the shim (only the shim needs to be public — the OpenClaw gateway
-   itself stays on loopback). Replace `1-2-3-4` with your VPS IP, dashes instead of dots:
+   `--gateway-bind lan` (not `loopback`) matters here — the `shim` container needs to
+   reach the gateway over the Docker network by hostname (`http://gateway:18789`), which
+   a loopback-only bind would refuse from a different container's network namespace.
+4. Start both services:
+   ```bash
+   docker compose up -d
+   docker compose logs gateway --tail 20   # look for "socket mode connected", no warnings
+   ```
+5. Point Caddy at the shim (only the shim is public — the gateway itself is never
+   exposed to the internet, only reachable from the shim over the Docker network).
+   Replace `1-2-3-4` with your VPS's IP, dashes instead of dots:
    ```
    # /etc/caddy/Caddyfile
    1-2-3-4.sslip.io {
@@ -223,10 +253,23 @@ Let's Encrypt certificate without buying a domain.
    ```bash
    systemctl reload caddy
    ```
-7. Redo the webhook registration from step 6 above with
-   `https://1-2-3-4.sslip.io/clickup` as the real public endpoint, and update
-   `CLICKUP_WEBHOOK_SECRET` in the VPS's `.env` (then `pm2 restart pm-bot-gateway
-   pm-bot-shim` to pick it up).
-8. Re-run `./scripts/register-automations.sh` on the VPS.
+6. Register the real ClickUp webhook against that HTTPS URL (from step 6 above, using
+   `https://1-2-3-4.sslip.io/clickup` as the endpoint), save the returned secret into
+   `.env` as `CLICKUP_WEBHOOK_SECRET`, then recreate the containers to pick it up
+   (`docker compose restart` does **not** reload `.env` — you need a recreate):
+   ```bash
+   docker compose up -d --force-recreate
+   ```
+7. Register the periodic automation inside the running container:
+   ```bash
+   docker compose exec gateway sh -c './scripts/register-automations.sh'
+   ```
+
+**Updating the deployment later:** `git pull && docker compose up -d --build` on the
+VPS. The `openclaw-state` and `pm-bot-state` named volumes persist across rebuilds, so
+Slack/ClickUp credentials, session history, and the bot's runtime state
+(`state/tasks_state.json`, `state/scope_log.json`) all survive — only `config/` and code
+changes come from the image. Editing `config/contacts.json` or `config/project.json`
+requires a rebuild+recreate to take effect (they're baked into the image, not a volume).
 
 Walk through `docs/DEMO_SCRIPT.md` against the deployed VPS instance before recording.

@@ -1,0 +1,31 @@
+services:
+  gateway:
+    build: .
+    container_name: pm-bot-gateway
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - openclaw-state:/root/.openclaw
+    mem_limit: 768m
+    networks: [pm-bot-net]
+
+  shim:
+    build: .
+    container_name: pm-bot-shim
+    restart: unless-stopped
+    command: ["node", "scripts/clickup-webhook-shim.js"]
+    env_file: .env
+    environment:
+      - OPENCLAW_URL=http://gateway:18789
+    depends_on: [gateway]
+    ports:
+      - "8787:8787"
+    mem_limit: 128m
+    networks: [pm-bot-net]
+
+volumes:
+  openclaw-state:
+
+networks:
+  pm-bot-net:
+    driver: bridge

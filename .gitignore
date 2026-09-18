@@ -1,5 +1,6 @@
 .env
 node_modules/
 state/tasks_state.json
+state/scope_log.json
 *.log
 .DS_Store

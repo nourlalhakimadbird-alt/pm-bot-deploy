@@ -6,6 +6,7 @@ services:
     env_file: .env
     volumes:
       - openclaw-state:/root/.openclaw
+      - pm-bot-state:/app/state
     mem_limit: 768m
     networks: [pm-bot-net]
 
@@ -25,6 +26,7 @@ services:
 
 volumes:
   openclaw-state:
+  pm-bot-state:
 
 networks:
   pm-bot-net:

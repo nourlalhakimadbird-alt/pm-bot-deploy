@@ -46,5 +46,5 @@ Tell the bot about a new task, e.g.:
 
 > Add a task: Accessibility audit, owner Aisha Rahman, due 24 Jun, Medium priority.
 
-Show it created in ClickUp, and open `config/project.json` to show `scope_log` gained
-an entry while `objective` is untouched.
+Show it created in ClickUp, and open `state/scope_log.json` to show it gained an entry
+while `config/project.json`'s `objective` is untouched.

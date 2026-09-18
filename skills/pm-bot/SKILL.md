@@ -80,10 +80,12 @@ Never bury the health label — it is always the first line.
 
 When a new task (or a change to an existing task's scope) comes in:
 - Create it in ClickUp via `clickup-api` as normal.
-- Append an entry to `config/project.json.scope_log` with today's date and a one-line
-  description of the change.
-- Never edit `config/project.json.objective` when handling a scope change — that field
-  only changes if the project lead explicitly says the objective itself is changing
+- Append an entry to `state/scope_log.json` (`{"entries": [...]}`) with today's date and
+  a one-line description of the change. If the file doesn't exist yet, create it with
+  `{"entries": []}` first, then append.
+- Never edit `config/project.json` when handling a scope change — that file is the
+  static project definition; `objective` only changes if the project lead explicitly
+  says the objective itself is changing
   (a different, rarer instruction than "add a task").
 
 ## 6. Completion — the confirmation gate

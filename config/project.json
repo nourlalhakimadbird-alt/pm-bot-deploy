@@ -1,7 +1,7 @@
 {
   "_comment": "Static project definition, versioned in git. The bot never writes here — runtime scope-change entries live in state/scope_log.json instead.",
   "objective": "Launch the Client Portal by 25 June so clients can self-serve account management, replacing manual email requests.",
-  "project_lead": "Sarah Chen",
+  "project_lead": "Aiprojectslynn (Lead)",
   "deadline": "2026-06-25",
   "escalation_after_hours": 4
 }

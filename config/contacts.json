@@ -1,6 +1,7 @@
 {
   "_comment": "Map every ClickUp assignee to their real Slack handle. Add teammates here before the real demo — do not guess handles.",
   "contacts": [
-    { "clickup_assignee": "Aiprojectslynn", "clickup_user_id": 240203285, "slack_handle": "user:U0C36HPPP0Q", "role": "owner" }
+    { "clickup_assignee": "Aiprojectslynn", "clickup_user_id": 240203285, "slack_handle": "user:U0C36HPPP0Q", "role": "owner" },
+    { "clickup_assignee": "Aiprojectslynn (Lead)", "slack_handle": "user:U0C36HPPP0Q", "role": "lead" }
   ]
 }

@@ -16,6 +16,17 @@ read it before acting, write it back after any action that should not repeat.
 Look up the Slack handle for a ClickUp assignee in `config/contacts.json`. Never post to
 a shared channel — every chase and escalation is a direct message to one person.
 
+## Watching for replies (do this in every normal conversation turn)
+
+You cannot reliably fetch old Slack messages by ID from an isolated automation run —
+don't try. Instead, replies are tracked in `state/tasks_state.json` as they happen: any
+time you receive an inbound Slack message from someone in `contacts.json` (a normal
+conversational turn, not a webhook/automation run), check state for a task where that
+person is the assignee, `last_contacted_at` is set, and `replied_at` is null. If you find
+one, set `replied_at` to now — any response from them counts as engagement, regardless of
+what it says. This is what lets the periodic check know a reply happened without ever
+reading Slack history.
+
 ## 1. Detecting problems
 
 A task needs attention when either is true:
@@ -39,14 +50,16 @@ episode unless the status changed again), DM the owner directly:
 > Impact: <names of downstream tasks blocked by this one, via dependencies>
 > Can you give me an update or let me know what you need to unblock this?
 
-Record `blocked_since` (first time you saw the problem), `last_contacted_at` (now), in
+Record `blocked_since` (first time you saw the problem), `last_contacted_at` (now), and
+`replied_at: null` (resets any earlier reply from a prior episode), in
 `state/tasks_state.json`.
 
 ## 3. Escalating
 
-If a task has been in the chased state for longer than
-`config/project.json.escalation_after_hours` since `last_contacted_at`, with no reply
-from the owner in that Slack DM thread, escalate once:
+Check purely from state — never try to read the Slack thread to check for a reply (see
+"Watching for replies" above; that tool path is unreliable from an isolated run and will
+fail the whole turn). If `replied_at` is still null and more time has passed since
+`last_contacted_at` than `config/project.json.escalation_after_hours`, escalate once:
 
 DM the project lead (role `lead` in `contacts.json`):
 

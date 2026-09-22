@@ -67,9 +67,12 @@ Record `blocked_since` (first time you saw the problem), `last_contacted_at` (no
 If the task's assignee has no entry in `config/contacts.json`, you cannot chase them —
 do not guess a handle and do not fall back to DMing the creator/watcher instead of the
 actual assignee. But never let this fail silently either: DM the project lead (role
-`lead`) once per episode instead, explaining what's blocked, who the unmapped assignee
-is (ClickUp name/email/user id), and that `config/contacts.json` needs an entry for them
-before you can chase directly. Record `missing_contact_notified: true` in state for that
+`lead`) once per **task**, explaining what's blocked, who the unmapped assignee is
+(ClickUp name/email/user id), and that `config/contacts.json` needs an entry for them
+before you can chase directly. This applies per task even if the same unmapped person is
+the reason for more than one blocked task — each task gets its own notification; don't
+suppress one just because you already sent a notification for a different task with the
+same underlying cause. Record `missing_contact_notified: true` in state for that
 task so this doesn't repeat every run — reset it if the assignee changes.
 
 ## 3. Escalating

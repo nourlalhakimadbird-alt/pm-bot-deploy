@@ -14,7 +14,7 @@ npx openclaw automations add \
   --every 15m \
   --agent main \
   --session isolated \
-  --message "Run the periodic check from the pm-bot skill: look for newly overdue tasks and BLOCKED tasks past their escalation window in config/project.json, and act per the skill's rules." \
+  --message "Run the periodic check from the pm-bot skill: look for newly overdue tasks, BLOCKED tasks past their escalation window in config/project.json, and any state entries with last_contacted_at null (a chase that never went out, e.g. an unmapped assignee) that need retrying or a lead notification. Act per the skill's rules." \
   --no-deliver
 
 echo "Registered. Verify with: npx openclaw automations list"

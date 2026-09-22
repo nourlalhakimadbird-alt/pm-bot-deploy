@@ -39,6 +39,14 @@ before this message reached you — see the `clickup-api` skill); (b) via the 15
 periodic automation, which also catches newly-overdue tasks (no webhook fires for the
 passage of time, so this is the only way overdue detection happens).
 
+The periodic run also has a retry job: for every task in `state/tasks_state.json` with
+`last_contacted_at: null` (a chase that never went out — e.g. an unmapped assignee),
+re-check `config/contacts.json`. If the assignee is mapped now, send the chase. If still
+unmapped and `missing_contact_notified` isn't already true, notify the lead per "When the
+owner isn't a known contact" below. Don't skip these just because they aren't newly
+detected this run — an unresolved episode stays open until it's actually chased or the
+contact gets mapped.
+
 ## 2. Chasing the owner
 
 When you find a task needing attention that you have not already chased (check

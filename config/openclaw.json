@@ -45,7 +45,8 @@
         "enabled": true,
         "dmPolicy": "open"
       },
-      "requireMention": false
+      "requireMention": false,
+      "replyToMode": "off"
     }
   },
   "hooks": {

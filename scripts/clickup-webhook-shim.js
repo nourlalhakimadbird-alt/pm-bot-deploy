@@ -30,6 +30,29 @@ function timingSafeEqualHex(a, b) {
   return crypto.timingSafeEqual(bufA, bufB);
 }
 
+// ClickUp (like most webhook providers) delivers at-least-once — the same
+// event can arrive twice within seconds. Relying on the LLM to coordinate a
+// read-modify-write race on state/tasks_state.json isn't reliable (we saw it
+// send duplicate chase DMs from two near-simultaneous deliveries of the same
+// event), so dedupe here instead, before anything reaches the agent.
+const DEDUPE_WINDOW_MS = 60_000;
+const seenEvents = new Map(); // key -> timestamp
+
+function pruneSeenEvents(now) {
+  for (const [key, ts] of seenEvents) {
+    if (now - ts > DEDUPE_WINDOW_MS) seenEvents.delete(key);
+  }
+}
+
+function isDuplicate(payload) {
+  const key = `${payload.task_id || ''}:${JSON.stringify(payload.history_items || [])}`;
+  const now = Date.now();
+  pruneSeenEvents(now);
+  if (seenEvents.has(key)) return true;
+  seenEvents.set(key, now);
+  return false;
+}
+
 function describeEvent(payload) {
   const event = payload.event || 'unknown_event';
   const taskId = payload.task_id || 'unknown_task';
@@ -84,6 +107,11 @@ const server = http.createServer((req, res) => {
       payload = JSON.parse(rawBody.toString('utf8'));
     } catch {
       res.writeHead(400).end('Invalid JSON');
+      return;
+    }
+
+    if (isDuplicate(payload)) {
+      res.writeHead(200).end('duplicate, ignored');
       return;
     }
 

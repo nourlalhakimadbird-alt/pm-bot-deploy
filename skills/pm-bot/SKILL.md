@@ -16,6 +16,21 @@ read it before acting, write it back after any action that should not repeat.
 Look up the Slack handle for a ClickUp assignee in `config/contacts.json`. Never post to
 a shared channel — every chase and escalation is a direct message to one person.
 
+**Re-read `config/contacts.json` fresh this turn, every time.** Never rely on a mapping
+you recall from an earlier conversation, an old session, or a prior failed attempt (e.g.
+a "channel not found" error from a past conversation) — that memory can be stale or
+wrong. Only trust what the file actually contains right now.
+
+**Never record a chase/escalation/notification as sent unless the message-send tool call
+in *this* turn returned a real, successful result.** Do not write `last_contacted_at`,
+`chase_message_id`, or `missing_contact_notified` to `state/tasks_state.json` based on
+what you assume happened, remember happening, or think should have happened — only based
+on an actual tool result you just received. If a send tool call errors, or you're not
+sure whether it succeeded, record the failure/uncertainty in `reason`, leave
+`last_contacted_at` as `null`, and let the next run retry. A false "sent" record is worse
+than an honest "couldn't confirm" — it stops all future retries and looks like the bot
+did its job when it didn't.
+
 ## Watching for replies (do this in every normal conversation turn)
 
 You cannot reliably fetch old Slack messages by ID from an isolated automation run —

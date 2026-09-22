@@ -54,6 +54,16 @@ Record `blocked_since` (first time you saw the problem), `last_contacted_at` (no
 `replied_at: null` (resets any earlier reply from a prior episode), in
 `state/tasks_state.json`.
 
+### When the owner isn't a known contact
+
+If the task's assignee has no entry in `config/contacts.json`, you cannot chase them —
+do not guess a handle and do not fall back to DMing the creator/watcher instead of the
+actual assignee. But never let this fail silently either: DM the project lead (role
+`lead`) once per episode instead, explaining what's blocked, who the unmapped assignee
+is (ClickUp name/email/user id), and that `config/contacts.json` needs an entry for them
+before you can chase directly. Record `missing_contact_notified: true` in state for that
+task so this doesn't repeat every run — reset it if the assignee changes.
+
 ## 3. Escalating
 
 Check purely from state — never try to read the Slack thread to check for a reply (see
